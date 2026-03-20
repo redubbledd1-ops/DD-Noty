@@ -36,7 +36,7 @@ const NoteInput = ({ onCreateNote }) => {
     return (
       <div
         onClick={() => setIsExpanded(true)}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 p-4 cursor-text flex items-center gap-3 hover:shadow-lg transition-shadow max-w-2xl mx-auto"
+        className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700 p-4 cursor-text flex items-center gap-3 transition-all duration-200 max-w-2xl mx-auto"
       >
         <Plus className="w-5 h-5 text-gray-400" />
         <span className="text-gray-500 dark:text-gray-400">Take a note...</span>
@@ -46,7 +46,7 @@ const NoteInput = ({ onCreateNote }) => {
 
   return (
     <div
-      className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-4 max-w-2xl mx-auto"
+      className="bg-white dark:bg-gray-900 rounded-2xl shadow-md border border-gray-200 dark:border-gray-700 p-4 max-w-2xl mx-auto transition-all duration-200"
       onBlur={handleBlur}
     >
       {/* Title input */}

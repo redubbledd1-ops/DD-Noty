@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme CSS variables */
+:root {
+  --bg: #000000;
+  --note-bg: #0f172a;
+  --header-bg: #020617;
+  --text-color: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --border-color: #1e293b;
+}
+
 /* Custom scrollbar for dark mode */
 .dark ::-webkit-scrollbar {
   width: 8px;
@@ -36,4 +46,84 @@
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
+}
+
+/* Prose styling for rich text content */
+.prose {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.prose strong,
+.prose b {
+  font-weight: 600;
+}
+
+.prose em,
+.prose i {
+  font-style: italic;
+}
+
+.prose u {
+  text-decoration: underline;
+}
+
+.prose span[style*="font-size"] {
+  line-height: 1.5;
+}
+
+/* Button link styling */
+.note-button {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #3b82f6 !important;
+  color: white !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  text-decoration: none !important;
+  cursor: pointer;
+  transition: opacity 0.2s, background 0.2s;
+  margin: 0 2px;
+  white-space: nowrap;
+}
+
+.note-button:hover {
+  opacity: 0.9;
+  background: #2563eb !important;
+}
+
+.note-button:active {
+  opacity: 0.8;
+}
+
+.note-button:visited {
+  color: white !important;
+}
+
+/* Checkbox list styling */
+.checkbox-list-item {
+  list-style: none !important;
+  position: relative;
+  padding-left: 28px;
+}
+
+.checkbox-list-item::before {
+  content: '☐';
+  position: absolute;
+  left: 0;
+  cursor: pointer;
+  user-select: none;
+  font-size: 18px;
+  line-height: 1.5;
+}
+
+.checkbox-list-item.checked::before {
+  content: '☑';
+  color: #10b981;
+}
+
+.checkbox-list-item.checked {
+  text-decoration: line-through;
+  opacity: 0.6;
 }

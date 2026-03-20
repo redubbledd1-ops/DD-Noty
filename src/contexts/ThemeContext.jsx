@@ -3,6 +3,16 @@ import { createContext, useContext, useState, useEffect } from 'react'
 // Create theme context
 const ThemeContext = createContext()
 
+// Default theme colors
+const DEFAULT_THEME = {
+  background: '#000000',
+  noteBackground: '#0f172a',
+  headerBackground: '#020617',
+  textColor: '#e5e7eb',
+  textSecondary: '#9ca3af',
+  borderColor: '#1e293b',
+}
+
 // Custom hook to use theme context
 export const useTheme = () => {
   const context = useContext(ThemeContext)
@@ -14,35 +24,49 @@ export const useTheme = () => {
 
 // Theme provider component
 export const ThemeProvider = ({ children }) => {
-  // Initialize theme from localStorage or system preference
-  const [darkMode, setDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme')
+  // Initialize theme from localStorage or defaults
+  const [colors, setColors] = useState(() => {
+    const saved = localStorage.getItem('themeColors')
     if (saved) {
-      return saved === 'dark'
+      try {
+        return JSON.parse(saved)
+      } catch {
+        return DEFAULT_THEME
+      }
     }
-    // Check system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches
+    return DEFAULT_THEME
   })
 
-  // Toggle dark mode
-  const toggleDarkMode = () => {
-    setDarkMode((prev) => !prev)
+  // Update a single color
+  const updateColor = (key, value) => {
+    setColors(prev => {
+      const updated = { ...prev, [key]: value }
+      localStorage.setItem('themeColors', JSON.stringify(updated))
+      return updated
+    })
   }
 
-  // Apply theme class to document and save preference
+  // Reset to defaults
+  const resetTheme = () => {
+    setColors(DEFAULT_THEME)
+    localStorage.setItem('themeColors', JSON.stringify(DEFAULT_THEME))
+  }
+
+  // Apply colors to CSS variables
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark')
-      localStorage.setItem('theme', 'dark')
-    } else {
-      document.documentElement.classList.remove('dark')
-      localStorage.setItem('theme', 'light')
-    }
-  }, [darkMode])
+    const root = document.documentElement
+    root.style.setProperty('--bg', colors.background)
+    root.style.setProperty('--note-bg', colors.noteBackground)
+    root.style.setProperty('--header-bg', colors.headerBackground)
+    root.style.setProperty('--text-color', colors.textColor)
+    root.style.setProperty('--text-secondary', colors.textSecondary)
+    root.style.setProperty('--border-color', colors.borderColor)
+  }, [colors])
 
   const value = {
-    darkMode,
-    toggleDarkMode,
+    colors,
+    updateColor,
+    resetTheme,
   }
 
   return (

@@ -1,9 +1,9 @@
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
-import { Sun, Moon, Bell, User, Shield } from 'lucide-react'
+import { User, Shield, Palette, RotateCcw } from 'lucide-react'
 
 const Settings = () => {
-  const { darkMode, toggleDarkMode } = useTheme()
+  const { colors, updateColor, resetTheme } = useTheme()
   const { user } = useAuth()
 
   return (
@@ -32,70 +32,165 @@ const Settings = () => {
           </div>
         </section>
 
-        {/* Appearance section */}
+        {/* Appearance section - Theme Colors */}
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="flex items-center gap-3 mb-4">
-            {darkMode ? (
-              <Moon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            ) : (
-              <Sun className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            )}
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Appearance
-            </h2>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <Palette className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+                Theme Colors
+              </h2>
+            </div>
+            <button
+              onClick={resetTheme}
+              className="flex items-center gap-2 px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white rounded hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+            >
+              <RotateCcw className="w-4 h-4" />
+              Reset
+            </button>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-4">
+            {/* Background Color */}
             <div className="flex items-center justify-between py-2">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block">
-                  Dark Mode
+                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                  Background
                 </span>
                 <span className="text-sm text-gray-400">
-                  Toggle between light and dark theme
+                  Main app background
                 </span>
               </div>
-              <button
-                onClick={toggleDarkMode}
-                className={`relative w-14 h-7 rounded-full transition-colors ${
-                  darkMode ? 'bg-amber-500' : 'bg-gray-300'
-                }`}
-              >
-                <span
-                  className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                    darkMode ? 'translate-x-8' : 'translate-x-1'
-                  }`}
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={colors.background}
+                  onChange={(e) => updateColor('background', e.target.value)}
+                  className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-              </button>
-            </div>
-          </div>
-        </section>
-
-        {/* Notifications section (future-ready) */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-              Notifications
-            </h2>
-          </div>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <span className="text-gray-600 dark:text-gray-300 block">
-                  Push Notifications
-                </span>
-                <span className="text-sm text-gray-400">
-                  Get notified about reminders
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  {colors.background}
                 </span>
               </div>
-              <span className="text-sm text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-full">
-                Coming soon
-              </span>
+            </div>
+
+            {/* Note Background Color */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                  Note Background
+                </span>
+                <span className="text-sm text-gray-400">
+                  Note card background
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={colors.noteBackground}
+                  onChange={(e) => updateColor('noteBackground', e.target.value)}
+                  className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  {colors.noteBackground}
+                </span>
+              </div>
+            </div>
+
+            {/* Header Background Color */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                  Header Background
+                </span>
+                <span className="text-sm text-gray-400">
+                  Header/navigation background
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={colors.headerBackground}
+                  onChange={(e) => updateColor('headerBackground', e.target.value)}
+                  className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  {colors.headerBackground}
+                </span>
+              </div>
+            </div>
+
+            {/* Text Color */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                  Text Color
+                </span>
+                <span className="text-sm text-gray-400">
+                  Primary text color
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={colors.textColor}
+                  onChange={(e) => updateColor('textColor', e.target.value)}
+                  className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  {colors.textColor}
+                </span>
+              </div>
+            </div>
+
+            {/* Secondary Text Color */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                  Secondary Text
+                </span>
+                <span className="text-sm text-gray-400">
+                  Secondary/muted text
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={colors.textSecondary}
+                  onChange={(e) => updateColor('textSecondary', e.target.value)}
+                  className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  {colors.textSecondary}
+                </span>
+              </div>
+            </div>
+
+            {/* Border Color */}
+            <div className="flex items-center justify-between py-2">
+              <div>
+                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                  Border Color
+                </span>
+                <span className="text-sm text-gray-400">
+                  Borders and dividers
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="color"
+                  value={colors.borderColor}
+                  onChange={(e) => updateColor('borderColor', e.target.value)}
+                  className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
+                />
+                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                  {colors.borderColor}
+                </span>
+              </div>
             </div>
           </div>
         </section>
 
-        {/* Privacy section (future-ready) */}
+        {/* Privacy section */}
         <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <div className="flex items-center gap-3 mb-4">
             <Shield className="w-5 h-5 text-gray-500 dark:text-gray-400" />

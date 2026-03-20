@@ -1,7 +1,9 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/ProtectedRoute'
 import Navbar from './components/Navbar'
+import ErrorBoundary from './components/ErrorBoundary'
 import Home from './pages/Home'
+import NotePage from './pages/NotePage'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Settings from './pages/Settings'
@@ -10,7 +12,7 @@ import { useAuth } from './contexts/AuthContext'
 // Layout component with navbar for authenticated pages
 const AuthenticatedLayout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
       <Navbar />
       <main>{children}</main>
     </div>
@@ -69,6 +71,16 @@ const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/note/:noteId"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <NotePage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -77,7 +89,11 @@ const AppRoutes = () => {
 }
 
 function App() {
-  return <AppRoutes />
+  return (
+    <ErrorBoundary>
+      <AppRoutes />
+    </ErrorBoundary>
+  )
 }
 
 export default App
