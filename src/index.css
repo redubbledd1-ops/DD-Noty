@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ensure proper mobile viewport handling */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
 /* Theme CSS variables */
 :root {
   --bg: #000000;

@@ -93,8 +93,8 @@ const Home = () => {
     }
   }
 
-  // Grid class for notes - 8 columns so col-span-1 is much smaller
-  const gridClass = "grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4 auto-rows-[120px]"
+  // Grid class for notes - responsive columns with better mobile layout
+  const gridClass = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4 auto-rows-[100px] sm:auto-rows-[120px]"
 
   if (loading) {
     return (
@@ -114,9 +114,9 @@ const Home = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 md:p-6">
+    <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-4 md:py-6">
       {/* Note input */}
-      <div className="mb-8">
+      <div className="mb-6 sm:mb-8">
         <NoteInput onCreateNote={handleCreateNote} />
       </div>
 

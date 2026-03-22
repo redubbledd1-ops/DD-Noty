@@ -12,9 +12,9 @@ import { useAuth } from './contexts/AuthContext'
 // Layout component with navbar for authenticated pages
 const AuthenticatedLayout = ({ children }) => {
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--bg)' }}>
+    <div className="min-h-screen w-full overflow-x-hidden" style={{ backgroundColor: 'var(--bg)' }}>
       <Navbar />
-      <main>{children}</main>
+      <main className="w-full">{children}</main>
     </div>
   )
 }

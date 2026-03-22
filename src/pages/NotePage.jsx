@@ -379,13 +379,13 @@ const NotePage = () => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-12 px-4 z-50 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-4 sm:pt-12 px-4 z-50 overflow-y-auto"
       onClick={handleBackdropClick}
     >
       {/* Note editor card */}
       <div 
         ref={editorRef}
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl mb-12"
+        className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl mb-4 sm:mb-12 max-h-[90vh] sm:max-h-none flex flex-col"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={handleEditorMouseDown}
       >
@@ -397,12 +397,12 @@ const NotePage = () => {
         </div>
 
         {/* Toolbar with actions */}
-        <div className="flex items-center justify-between gap-2 p-4 border-b border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 sm:p-4 border-b border-gray-100 dark:border-gray-700 overflow-x-auto">
           {/* Text formatting controls */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             {/* Font size control */}
-            <div className="flex items-center gap-2">
-              <Type className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            <div className="flex items-center gap-1 sm:gap-2">
+              <Type className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
               <input
                 type="number"
                 min="10"
@@ -418,17 +418,17 @@ const NotePage = () => {
                   setFontSize(size)
                   applyFontSize(size)
                 }}
-                className="w-16 px-2 py-1 text-sm rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600"
+                className="w-14 sm:w-16 px-2 py-1 text-xs sm:text-sm rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600"
                 title="Font size in pixels"
               />
-              <span className="text-xs text-gray-500">px</span>
+              <span className="text-xs text-gray-500 flex-shrink-0">px</span>
             </div>
 
             {/* Make button */}
             <button
               onMouseDown={(e) => e.preventDefault()}
               onClick={createButton}
-              className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+              className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex-shrink-0"
               title="Create clickable button from selected text"
             >
               <Link2 className="w-4 h-4 text-blue-500" />
@@ -438,7 +438,7 @@ const NotePage = () => {
             <button
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => applyList('bullet')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
               title="Create bullet list"
             >
               <List className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -448,7 +448,7 @@ const NotePage = () => {
             <button
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => applyList('numbered')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
               title="Create numbered list"
             >
               <ListOrdered className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -458,7 +458,7 @@ const NotePage = () => {
             <button
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => applyList('checkbox')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
               title="Create checkbox list"
             >
               <CheckSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" />
@@ -466,7 +466,7 @@ const NotePage = () => {
           </div>
 
           {/* Right side actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Favorite toggle */}
             <button
               onClick={toggleFavorite}
@@ -498,14 +498,14 @@ const NotePage = () => {
         </div>
 
         {/* Editor content */}
-        <div className="p-6">
+        <div className="p-3 sm:p-6 flex-1 overflow-y-auto flex flex-col">
           {/* Title input */}
           <input
             type="text"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-transparent outline-none text-gray-800 dark:text-white placeholder-gray-400 text-2xl font-semibold mb-4"
+            className="w-full bg-transparent outline-none text-gray-800 dark:text-white placeholder-gray-400 text-xl sm:text-2xl font-semibold mb-3 sm:mb-4"
           />
 
           {/* Content editor with rich text support */}
@@ -521,21 +521,22 @@ const NotePage = () => {
                 e.target.classList.toggle('checked')
               }
             }}
-            className="w-full bg-transparent outline-none text-gray-700 dark:text-gray-200 min-h-[300px] focus:outline-none"
+            className="w-full bg-transparent outline-none text-gray-700 dark:text-gray-200 min-h-[150px] sm:min-h-[300px] focus:outline-none flex-1 overflow-y-auto text-sm sm:text-base"
             style={{ color: 'var(--text-color)' }}
           />
           
           {/* Formatting hints */}
-          <div className="mt-4 text-xs text-gray-400 space-y-1">
+          <div className="mt-3 sm:mt-4 text-xs text-gray-400 space-y-1 flex-shrink-0">
             <p>💡 Keyboard shortcuts:</p>
-            <p>Ctrl+B = Bold | Ctrl+I = Italic | Ctrl+U = Underline | Ctrl+Z = Undo | Ctrl+Y = Redo</p>
+            <p className="hidden sm:block">Ctrl+B = Bold | Ctrl+I = Italic | Ctrl+U = Underline | Ctrl+Z = Undo | Ctrl+Y = Redo</p>
+            <p className="sm:hidden">Ctrl+B/I/U = Format | Ctrl+Z/Y = Undo/Redo</p>
           </div>
         </div>
 
         {/* Footer with date and close button */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
           {/* Updated date - bottom left */}
-          <span className="text-xs text-gray-400">
+          <span className="text-xs text-gray-400 order-2 sm:order-1">
             {updatedAt ? `Edited ${formatDate(updatedAt)}` : ''}
           </span>
 
@@ -543,7 +544,7 @@ const NotePage = () => {
           <button
             onClick={handleSaveAndClose}
             disabled={saving}
-            className="px-6 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed"
+            className="w-full sm:w-auto px-6 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed order-1 sm:order-2"
           >
             {saving ? 'Saving...' : 'Sluiten'}
           </button>

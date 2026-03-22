@@ -7,15 +7,15 @@ const Settings = () => {
   const { user } = useAuth()
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+    <div className="w-full max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-4 sm:mb-6">
         Settings
       </h1>
 
       {/* Settings sections */}
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Account section */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
           <div className="flex items-center gap-3 mb-4">
             <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
@@ -51,12 +51,12 @@ const Settings = () => {
           </div>
           <div className="space-y-4">
             {/* Background Color */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-3 sm:gap-0">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                <span className="text-gray-600 dark:text-gray-300 block font-medium text-sm sm:text-base">
                   Background
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs sm:text-sm text-gray-400">
                   Main app background
                 </span>
               </div>
@@ -67,19 +67,19 @@ const Settings = () => {
                   onChange={(e) => updateColor('background', e.target.value)}
                   className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono">
                   {colors.background}
                 </span>
               </div>
             </div>
 
             {/* Note Background Color */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-3 sm:gap-0">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                <span className="text-gray-600 dark:text-gray-300 block font-medium text-sm sm:text-base">
                   Note Background
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs sm:text-sm text-gray-400">
                   Note card background
                 </span>
               </div>
@@ -90,19 +90,19 @@ const Settings = () => {
                   onChange={(e) => updateColor('noteBackground', e.target.value)}
                   className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono">
                   {colors.noteBackground}
                 </span>
               </div>
             </div>
 
             {/* Header Background Color */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-3 sm:gap-0">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                <span className="text-gray-600 dark:text-gray-300 block font-medium text-sm sm:text-base">
                   Header Background
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs sm:text-sm text-gray-400">
                   Header/navigation background
                 </span>
               </div>
@@ -113,19 +113,19 @@ const Settings = () => {
                   onChange={(e) => updateColor('headerBackground', e.target.value)}
                   className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono">
                   {colors.headerBackground}
                 </span>
               </div>
             </div>
 
             {/* Text Color */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-3 sm:gap-0">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                <span className="text-gray-600 dark:text-gray-300 block font-medium text-sm sm:text-base">
                   Text Color
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs sm:text-sm text-gray-400">
                   Primary text color
                 </span>
               </div>
@@ -136,19 +136,19 @@ const Settings = () => {
                   onChange={(e) => updateColor('textColor', e.target.value)}
                   className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono">
                   {colors.textColor}
                 </span>
               </div>
             </div>
 
             {/* Secondary Text Color */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-3 sm:gap-0">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                <span className="text-gray-600 dark:text-gray-300 block font-medium text-sm sm:text-base">
                   Secondary Text
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs sm:text-sm text-gray-400">
                   Secondary/muted text
                 </span>
               </div>
@@ -159,19 +159,19 @@ const Settings = () => {
                   onChange={(e) => updateColor('textSecondary', e.target.value)}
                   className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono">
                   {colors.textSecondary}
                 </span>
               </div>
             </div>
 
             {/* Border Color */}
-            <div className="flex items-center justify-between py-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-3 sm:gap-0">
               <div>
-                <span className="text-gray-600 dark:text-gray-300 block font-medium">
+                <span className="text-gray-600 dark:text-gray-300 block font-medium text-sm sm:text-base">
                   Border Color
                 </span>
-                <span className="text-sm text-gray-400">
+                <span className="text-xs sm:text-sm text-gray-400">
                   Borders and dividers
                 </span>
               </div>
@@ -182,7 +182,7 @@ const Settings = () => {
                   onChange={(e) => updateColor('borderColor', e.target.value)}
                   className="w-12 h-10 rounded cursor-pointer border-2 border-gray-300 dark:border-gray-600"
                 />
-                <span className="text-sm text-gray-500 dark:text-gray-400 font-mono">
+                <span className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 font-mono">
                   {colors.borderColor}
                 </span>
               </div>

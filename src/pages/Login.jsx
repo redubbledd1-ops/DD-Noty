@@ -45,21 +45,21 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 w-full max-w-md">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 sm:p-8 w-full max-w-md">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <StickyNote className="w-10 h-10 text-amber-500" />
-          <span className="text-2xl font-bold text-gray-800 dark:text-white">
+        <div className="flex items-center justify-center gap-2 mb-6 sm:mb-8">
+          <StickyNote className="w-8 sm:w-10 h-8 sm:h-10 text-amber-500" />
+          <span className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white">
             Noty
           </span>
         </div>
 
         {/* Title */}
-        <h1 className="text-2xl font-semibold text-center text-gray-800 dark:text-white mb-2">
+        <h1 className="text-xl sm:text-2xl font-semibold text-center text-gray-800 dark:text-white mb-2">
           Welcome back
         </h1>
-        <p className="text-center text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-center text-gray-500 dark:text-gray-400 mb-4 sm:mb-6 text-sm sm:text-base">
           Sign in to access your notes
         </p>
 

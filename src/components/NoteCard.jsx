@@ -31,8 +31,13 @@ const NoteCard = ({ note, onDelete, onResizeEnd, onClick, isDragging, onResizing
     onDelete(note.id)
   }
 
-  // Start resize on mouse down
+  // Start resize on mouse down (desktop only)
   const handleResizeStart = (e) => {
+    // Disable resize on mobile devices
+    if (window.innerWidth < 768) {
+      return
+    }
+
     e.stopPropagation()
     e.preventDefault()
 
@@ -158,7 +163,7 @@ const NoteCard = ({ note, onDelete, onResizeEnd, onClick, isDragging, onResizing
       className={`
         rounded-2xl 
         shadow-sm hover:shadow-md 
-        p-3
+        p-2 sm:p-3
         flex flex-col 
         group 
         cursor-pointer 
@@ -176,7 +181,7 @@ const NoteCard = ({ note, onDelete, onResizeEnd, onClick, isDragging, onResizing
     >
       {/* Note title - scale based on height */}
       {note.title && (
-        <h3 className={`font-semibold ${getTitleSize(note.h || 2)} text-gray-800 dark:text-white mb-1`}>
+        <h3 className={`font-semibold ${getTitleSize(note.h || 2)} text-gray-800 dark:text-white mb-1 text-xs sm:text-sm line-clamp-2`}>
           {note.title}
         </h3>
       )}
@@ -187,7 +192,7 @@ const NoteCard = ({ note, onDelete, onResizeEnd, onClick, isDragging, onResizing
         onClick={handleContentClick}
       >
         <div 
-          className="text-sm break-words prose prose-invert max-w-none"
+          className="text-xs sm:text-sm break-words prose prose-invert max-w-none"
           style={{ color: 'var(--text-color)' }}
           dangerouslySetInnerHTML={{ __html: note.content || '' }}
         />
@@ -202,22 +207,24 @@ const NoteCard = ({ note, onDelete, onResizeEnd, onClick, isDragging, onResizing
         <Trash2 className="w-4 h-4 text-red-500" />
       </button>
 
-      {/* Resize handle - bottom right, drag to resize */}
-      <div
-        onMouseDown={handleResizeStart}
-        className="absolute bottom-1 right-1 w-6 h-6 cursor-se-resize opacity-0 group-hover:opacity-70 hover:opacity-100 transition-opacity z-10 flex items-center justify-center"
-        aria-label="Resize note"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          className="w-3.5 h-3.5 text-gray-400"
+      {/* Resize handle - bottom right, drag to resize (desktop only) */}
+      {window.innerWidth >= 768 && (
+        <div
+          onMouseDown={handleResizeStart}
+          className="absolute bottom-1 right-1 w-6 h-6 cursor-se-resize opacity-0 group-hover:opacity-70 hover:opacity-100 transition-opacity z-10 flex items-center justify-center"
+          aria-label="Resize note"
         >
-          <path d="M22 22L12 22M22 22L22 12M22 22L16 16" />
-        </svg>
-      </div>
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            className="w-3.5 h-3.5 text-gray-400"
+          >
+            <path d="M22 22L12 22M22 22L22 12M22 22L16 16" />
+          </svg>
+        </div>
+      )}
 
       {/* Size indicator while resizing */}
       {isResizing && previewSize && (
