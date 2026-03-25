@@ -1,5 +1,6 @@
 import { useTheme } from '../contexts/ThemeContext'
 import { useAuth } from '../contexts/AuthContext'
+import { themeConfig } from '../config/theme'
 import { User, Shield, Palette, RotateCcw } from 'lucide-react'
 
 const Settings = () => {
@@ -8,24 +9,24 @@ const Settings = () => {
 
   return (
     <div className="w-full max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-800 dark:text-white mb-4 sm:mb-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6" style={{ color: themeConfig.text.primary }}>
         Settings
       </h1>
 
       {/* Settings sections */}
       <div className="space-y-4 sm:space-y-6">
         {/* Account section */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 sm:p-6">
+        <section className="rounded-lg shadow-md p-4 sm:p-6" style={{ backgroundColor: themeConfig.background.note, borderColor: themeConfig.border.default, borderWidth: '1px' }}>
           <div className="flex items-center gap-3 mb-4">
-            <User className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+            <User className="w-5 h-5" style={{ color: themeConfig.text.secondary }} />
+            <h2 className="text-lg font-semibold" style={{ color: themeConfig.text.primary }}>
               Account
             </h2>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between py-2">
-              <span className="text-gray-600 dark:text-gray-300">Email</span>
-              <span className="text-gray-800 dark:text-white font-medium">
+              <span style={{ color: themeConfig.text.secondary }}>Email</span>
+              <span style={{ color: themeConfig.text.primary }} className="font-medium">
                 {user?.email}
               </span>
             </div>
@@ -33,11 +34,11 @@ const Settings = () => {
         </section>
 
         {/* Appearance section - Theme Colors */}
-        <section className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <section className="rounded-lg shadow-md p-4 sm:p-6" style={{ backgroundColor: themeConfig.background.note, borderColor: themeConfig.border.default, borderWidth: '1px' }}>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
-              <Palette className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
+              <Palette className="w-5 h-5" style={{ color: themeConfig.text.secondary }} />
+              <h2 className="text-lg font-semibold" style={{ color: themeConfig.text.primary }}>
                 Theme Colors
               </h2>
             </div>

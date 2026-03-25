@@ -2,7 +2,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import { useScrollHeader } from '../hooks/useScrollHeader'
-import { StickyNote, Settings, LogOut } from 'lucide-react'
+import { themeConfig } from '../config/theme'
+import { StickyNote, Settings, LogOut, Tag } from 'lucide-react'
 
 const Navbar = () => {
   const { user, logout } = useAuth()
@@ -33,7 +34,7 @@ const Navbar = () => {
             <StickyNote className="w-6 sm:w-8 h-6 sm:h-8 text-amber-500" />
             <span 
               className="text-lg sm:text-xl font-bold"
-              style={{ color: 'var(--text-color)' }}
+              style={{ color: themeConfig.text.primary }}
             >
               Noty
             </span>
@@ -43,6 +44,21 @@ const Navbar = () => {
           <div className="flex items-center gap-1 sm:gap-2">
             {user && (
               <>
+                {/* Categories link */}
+                <Link
+                  to="/categories"
+                  className="p-2 rounded-full transition-colors flex-shrink-0"
+                  style={{
+                    backgroundColor: location.pathname === '/categories' ? colors.borderColor : 'transparent',
+                  }}
+                  aria-label="Categories"
+                >
+                  <Tag 
+                    className="w-5 h-5"
+                    style={{ color: themeConfig.text.secondary }}
+                  />
+                </Link>
+
                 {/* Settings link */}
                 <Link
                   to="/settings"
@@ -54,7 +70,7 @@ const Navbar = () => {
                 >
                   <Settings 
                     className="w-5 h-5"
-                    style={{ color: 'var(--text-secondary)' }}
+                    style={{ color: themeConfig.text.secondary }}
                   />
                 </Link>
 
@@ -66,14 +82,14 @@ const Navbar = () => {
                 >
                   <LogOut 
                     className="w-5 h-5"
-                    style={{ color: 'var(--text-secondary)' }}
+                    style={{ color: themeConfig.text.secondary }}
                   />
                 </button>
 
                 {/* User email */}
                 <span 
                   className="hidden sm:block text-xs sm:text-sm ml-2 truncate"
-                  style={{ color: 'var(--text-secondary)' }}
+                  style={{ color: themeConfig.text.secondary }}
                 >
                   {user.email}
                 </span>

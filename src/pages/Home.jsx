@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -12,18 +13,42 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useNotes } from '../hooks/useNotes'
+import { useCategories } from '../hooks/useCategories'
 import SortableNoteCard from '../components/SortableNoteCard'
 import NoteInput from '../components/NoteInput'
 import LoadingSpinner from '../components/LoadingSpinner'
+import SelectionToolbar from '../components/SelectionToolbar'
 import { StickyNote, Pin } from 'lucide-react'
 
 const Home = () => {
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { notes, setNotes, loading, error, createNote, updateNote, deleteNote, reorderNotes } = useNotes()
+  const { categories } = useCategories()
+  
+  // Multi-select state
+  const [selectedNotes, setSelectedNotes] = useState(new Set())
+  const [isSelectionMode, setIsSelectionMode] = useState(false)
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null)
+  const longPressTimerRef = useRef(null)
+  const longPressDurationRef = useRef(500) // 500ms for long press
+
+  // Read category filter from URL
+  useEffect(() => {
+    const categoryId = searchParams.get('category')
+    setSelectedCategoryId(categoryId)
+  }, [searchParams])
+
+  // Filter notes by category if selected
+  const filteredNotes = selectedCategoryId
+    ? notes.filter(n => n.categories && n.categories.includes(selectedCategoryId))
+    : notes
 
   // Split notes into favorites and others
-  const favorites = notes.filter((n) => n.isFavorite)
-  const others = notes.filter((n) => !n.isFavorite)
+  const favorites = filteredNotes.filter((n) => n.isFavorite)
+  const others = filteredNotes.filter((n) => !n.isFavorite)
 
   // Configure sensors for drag detection
   const sensors = useSensors(
@@ -39,7 +64,13 @@ const Home = () => {
 
   // Handle creating a new note
   const handleCreateNote = async (title, content) => {
-    await createNote(title, content)
+    try {
+      const newNoteId = await createNote(title, content)
+      // Navigate directly to the new note in editor
+      navigate(`/note/${newNoteId}`)
+    } catch (error) {
+      console.error('Error creating note:', error)
+    }
   }
 
   // Handle deleting a note
@@ -51,19 +82,105 @@ const Home = () => {
 
   // Handle resize end - update layout only after mouse up (keeps position stable)
   const handleResizeEnd = async (noteId, w, h) => {
-    // Optimistic update for instant feedback
-    setNotes(prevNotes => 
-      prevNotes.map(note => 
-        note.id === noteId ? { ...note, w, h } : note
-      )
-    )
-    
-    // Persist to database
+    // Persist to database first
     try {
       await updateNote(noteId, { w, h })
     } catch (err) {
       console.error('Error resizing note:', err)
     }
+  }
+
+  // Track if long press was triggered
+  const longPressTriggeredRef = useRef(false)
+
+  // Handle long press on note card
+  const handleNoteMouseDown = (noteId) => {
+    longPressTriggeredRef.current = false
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true
+      setIsSelectionMode(true)
+      setSelectedNotes(new Set([noteId]))
+    }, longPressDurationRef.current)
+  }
+
+  // Handle mouse up - only clear timer, don't exit selection mode
+  const handleNoteMouseUp = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }
+
+  // Handle note click - in selection mode, toggle selection; otherwise open note
+  const handleNoteClick = (noteId) => {
+    // If long press just triggered, don't do anything
+    if (longPressTriggeredRef.current) {
+      longPressTriggeredRef.current = false
+      return
+    }
+    
+    if (isSelectionMode) {
+      // Toggle selection
+      const newSelected = new Set(selectedNotes)
+      if (newSelected.has(noteId)) {
+        newSelected.delete(noteId)
+      } else {
+        newSelected.add(noteId)
+      }
+      setSelectedNotes(newSelected)
+    } else {
+      // Open note
+      navigate(`/note/${noteId}`)
+    }
+  }
+
+  // Toggle note selection (for checkbox click)
+  const toggleNoteSelection = (noteId) => {
+    const newSelected = new Set(selectedNotes)
+    if (newSelected.has(noteId)) {
+      newSelected.delete(noteId)
+    } else {
+      newSelected.add(noteId)
+    }
+    setSelectedNotes(newSelected)
+  }
+
+  // Delete selected notes
+  const handleDeleteSelected = async () => {
+    if (!window.confirm(`Delete ${selectedNotes.size} note(s)?`)) return
+    
+    for (const noteId of selectedNotes) {
+      await deleteNote(noteId)
+    }
+    setSelectedNotes(new Set())
+    setIsSelectionMode(false)
+  }
+
+  // Add or remove selected notes from category
+  const handleAddToCategory = async (categoryId, isRemove = false) => {
+    for (const noteId of selectedNotes) {
+      const note = notes.find(n => n.id === noteId)
+      const currentCategories = note.categories || []
+      
+      if (isRemove) {
+        // Remove from category
+        const updatedCategories = currentCategories.filter(id => id !== categoryId)
+        await updateNote(noteId, { categories: updatedCategories })
+      } else {
+        // Add to category
+        if (!currentCategories.includes(categoryId)) {
+          currentCategories.push(categoryId)
+          await updateNote(noteId, { categories: currentCategories })
+        }
+      }
+    }
+    // Keep selection mode active - don't close
+  }
+
+  // Close selection mode
+  const handleCloseSelection = () => {
+    setSelectedNotes(new Set())
+    setIsSelectionMode(false)
   }
 
   // Handle drag end - reorder notes within same section
@@ -158,6 +275,12 @@ const Home = () => {
                         note={note}
                         onDelete={handleDeleteNote}
                         onResizeEnd={handleResizeEnd}
+                        isSelected={selectedNotes.has(note.id)}
+                        onMouseDown={handleNoteMouseDown}
+                        onMouseUp={handleNoteMouseUp}
+                        onNoteClick={handleNoteClick}
+                        isSelectionMode={isSelectionMode}
+                        categories={categories}
                       />
                     ))}
                   </div>
@@ -168,7 +291,7 @@ const Home = () => {
 
           {/* Other notes section */}
           {others.length > 0 && (
-            <div>
+            <div className={isSelectionMode ? 'pb-24' : ''}>
               {favorites.length > 0 && (
                 <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
                   Others
@@ -190,12 +313,31 @@ const Home = () => {
                         note={note}
                         onDelete={handleDeleteNote}
                         onResizeEnd={handleResizeEnd}
+                        isSelected={selectedNotes.has(note.id)}
+                        onMouseDown={handleNoteMouseDown}
+                        onMouseUp={handleNoteMouseUp}
+                        onNoteClick={handleNoteClick}
+                        isSelectionMode={isSelectionMode}
+                        categories={categories}
                       />
                     ))}
                   </div>
                 </SortableContext>
               </DndContext>
             </div>
+          )}
+
+          {/* Selection toolbar */}
+          {isSelectionMode && (
+            <SelectionToolbar
+              selectedCount={selectedNotes.size}
+              onAddToCategory={handleAddToCategory}
+              onDeleteSelected={handleDeleteSelected}
+              categories={categories}
+              onClose={handleCloseSelection}
+              selectedNotes={selectedNotes}
+              notes={notes}
+            />
           )}
         </>
       )}

@@ -18,6 +18,67 @@ html, body {
   --border-color: #1e293b;
 }
 
+/* List styling */
+ul, ol {
+  margin: 0.5em 0;
+  padding-left: 2em;
+  list-style-type: auto;
+}
+
+/* Ensure list markers are visible with theme color */
+ul li {
+  list-style-type: disc;
+  color: var(--text-color);
+}
+
+ol li {
+  list-style-type: decimal;
+  color: var(--text-color);
+}
+
+/* Style markers explicitly */
+ul li::marker,
+ol li::marker {
+  color: var(--text-color);
+  font-weight: inherit;
+}
+
+li {
+  margin: 0.25em 0;
+}
+
+/* Checkbox list styling */
+.checkbox-list-item {
+  list-style: none;
+  position: relative;
+  padding-left: 1.5em;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.checkbox-list-item::before {
+  content: '☐';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1.1em;
+  line-height: 1;
+  user-select: none;
+  cursor: pointer;
+  color: var(--text-color);
+}
+
+.checkbox-list-item.checked {
+  opacity: 0.6;
+  text-decoration: line-through;
+  color: var(--text-color);
+}
+
+.checkbox-list-item.checked::before {
+  content: '☑';
+  color: var(--text-color);
+}
+
 /* Custom scrollbar for dark mode */
 .dark ::-webkit-scrollbar {
   width: 8px;

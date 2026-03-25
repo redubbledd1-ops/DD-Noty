@@ -4,6 +4,7 @@ import Navbar from './components/Navbar'
 import ErrorBoundary from './components/ErrorBoundary'
 import Home from './pages/Home'
 import NotePage from './pages/NotePage'
+import Categories from './pages/Categories'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Settings from './pages/Settings'
@@ -77,6 +78,16 @@ const AppRoutes = () => {
           <ProtectedRoute>
             <AuthenticatedLayout>
               <NotePage />
+            </AuthenticatedLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/categories"
+        element={
+          <ProtectedRoute>
+            <AuthenticatedLayout>
+              <Categories />
             </AuthenticatedLayout>
           </ProtectedRoute>
         }

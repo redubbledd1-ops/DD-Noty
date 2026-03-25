@@ -1,145 +1,206 @@
 import { useState, useEffect } from 'react'
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  query,
-  onSnapshot,
-  serverTimestamp,
-  writeBatch,
-} from 'firebase/firestore'
-import { db } from '../config/firebase'
-import { useAuth } from '../contexts/AuthContext'
 
-// Custom hook for managing notes with Firestore
+// Calculate optimal note size based on content
+const calculateNoteSize = (title, content) => {
+  // Count lines and find longest line length
+  let lines = 0
+  let maxLineLength = 0
+  
+  // Count title as first line if it exists
+  if (title && title.trim()) {
+    lines = 1
+    maxLineLength = title.length
+  }
+  
+  // Parse content if it's a string
+  let parsedContent = content
+  if (typeof content === 'string') {
+    try {
+      parsedContent = JSON.parse(content)
+    } catch (e) {
+      // If it's plain text, count lines directly
+      const textLines = content.split('\n').filter(l => l.trim())
+      lines += textLines.length
+      const lineLengths = textLines.map(l => l.length)
+      if (lineLengths.length > 0) {
+        maxLineLength = Math.max(maxLineLength, Math.max(...lineLengths))
+      }
+    }
+  }
+  
+  // Process ProseMirror JSON content
+  if (parsedContent && parsedContent.content && Array.isArray(parsedContent.content)) {
+    parsedContent.content.forEach(node => {
+      // Count all block-level nodes as lines
+      if (node.type === 'paragraph' || node.type === 'heading' || 
+          node.type === 'bulletList' || node.type === 'orderedList' || 
+          node.type === 'taskList') {
+        
+        if (node.type === 'paragraph' || node.type === 'heading') {
+          lines++
+          let lineText = ''
+          if (node.content) {
+            node.content.forEach(n => {
+              if (n.text) lineText += n.text
+            })
+          }
+          maxLineLength = Math.max(maxLineLength, lineText.length)
+        } else {
+          // Lists - count each item as a line
+          if (node.content) {
+            node.content.forEach(item => {
+              lines++
+              let lineText = ''
+              if (item.content) {
+                item.content.forEach(n => {
+                  if (n.type === 'paragraph' && n.content) {
+                    n.content.forEach(c => {
+                      if (c.text) lineText += c.text
+                    })
+                  } else if (n.text) {
+                    lineText += n.text
+                  }
+                })
+              }
+              maxLineLength = Math.max(maxLineLength, lineText.length)
+            })
+          }
+        }
+      }
+    })
+  }
+
+  // Ensure at least 1 line if there's any content
+  if (lines === 0 && maxLineLength > 0) lines = 1
+
+  // Calculate WIDTH based on longest line length
+  // Every 20 chars = 1 width unit, max 4
+  // 1-20 chars = 1, 21-40 = 2, 41-60 = 3, 61+ = 4
+  let w = 1
+  if (maxLineLength > 60) {
+    w = 4
+  } else if (maxLineLength > 40) {
+    w = 3
+  } else if (maxLineLength > 20) {
+    w = 2
+  } else {
+    w = 1
+  }
+
+  // Calculate HEIGHT based on number of lines
+  // 1-3 lines = 1, 4-6 = 2, 7-10 = 3, 11+ = 4
+  let h = 1
+  if (lines > 10) {
+    h = 4
+  } else if (lines > 6) {
+    h = 3
+  } else if (lines > 3) {
+    h = 2
+  }
+
+  // Minimum size 1x1
+  return { w: Math.max(1, w), h: Math.max(1, h) }
+}
+
+// Custom hook for managing notes with localStorage
 export const useNotes = () => {
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const { user } = useAuth()
 
-  // Subscribe to realtime notes updates
+  // Load notes from localStorage on mount
   useEffect(() => {
-    if (!user) {
-      setNotes([])
+    try {
+      const storedNotes = JSON.parse(localStorage.getItem('notes') || '[]')
+      setNotes(storedNotes)
       setLoading(false)
-      return
+    } catch (err) {
+      console.error('Error loading notes from localStorage:', err)
+      setError(err.message)
+      setLoading(false)
     }
-
-    setLoading(true)
-    setError(null)
-
-    // Reference to user's notes collection
-    const notesRef = collection(db, 'users', user.uid, 'notes')
-    const q = query(notesRef)
-
-    // Set up realtime listener
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const notesData = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          // Convert Firestore timestamp to JS Date
-          createdAt: doc.data().createdAt?.toDate?.() || new Date(),
-          updatedAt: doc.data().updatedAt?.toDate?.() || new Date(),
-        }))
-
-        // Sort: favorites first, then by order, then by updatedAt
-        notesData.sort((a, b) => {
-          // Favorites always on top
-          if (a.isFavorite && !b.isFavorite) return -1
-          if (!a.isFavorite && b.isFavorite) return 1
-
-          // If both have order, sort by order ascending
-          if (a.order !== undefined && b.order !== undefined) {
-            return a.order - b.order
-          }
-          // If only one has order, prioritize the one with order
-          if (a.order !== undefined) return -1
-          if (b.order !== undefined) return 1
-          // Otherwise sort by updatedAt descending
-          return b.updatedAt - a.updatedAt
-        })
-
-        setNotes(notesData)
-        setLoading(false)
-      },
-      (err) => {
-        console.error('Error fetching notes:', err)
-        setError(err.message)
-        setLoading(false)
-      }
-    )
-
-    // Cleanup subscription on unmount
-    return () => unsubscribe()
-  }, [user])
+  }, [])
 
   // Create a new note
   const createNote = async (title, content) => {
-    if (!user) throw new Error('User must be logged in')
+    try {
+      // Generate unique ID using timestamp
+      const newId = Date.now().toString()
 
-    const notesRef = collection(db, 'users', user.uid, 'notes')
-    
-    // Calculate next shortId
-    let nextShortId = 1
-    if (notes.length > 0) {
-      const maxShortId = Math.max(...notes.map(n => n.shortId || 0))
-      nextShortId = maxShortId + 1
+      // Calculate optimal size based on content
+      const { w, h } = calculateNoteSize(title, content)
+
+      const newNote = {
+        id: newId,
+        title: title.trim(),
+        content: content || null,  // Content is JSON object (from editor.getJSON()), not string
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        order: 0,
+        isFavorite: false,
+        w: w,
+        h: h,
+        shortId: notes.length + 1,
+      }
+
+      // Add to localStorage - new notes at the beginning (top-right)
+      const storedNotes = JSON.parse(localStorage.getItem('notes') || '[]')
+      storedNotes.unshift(newNote)
+      localStorage.setItem('notes', JSON.stringify(storedNotes))
+
+      // Update state
+      setNotes(storedNotes)
+
+      return newId
+    } catch (err) {
+      console.error('Error creating note:', err)
+      throw err
     }
-
-    const noteData = {
-      title: title.trim(),
-      content: content.trim(),
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      order: 0, // New notes go to the top
-      isFavorite: false,
-      w: 2, // columns wide (1-4)
-      h: 2, // rows tall (1-6)
-      shortId: nextShortId, // Short incremental ID
-    }
-
-    const docRef = await addDoc(notesRef, noteData)
-    return docRef.id
   }
 
   // Update an existing note
   const updateNote = async (noteId, updates) => {
-    if (!user) throw new Error('User must be logged in')
-
-    const noteRef = doc(db, 'users', user.uid, 'notes', noteId)
-    const updateData = {
-      ...updates,
-      updatedAt: serverTimestamp(),
+    try {
+      const storedNotes = JSON.parse(localStorage.getItem('notes') || '[]')
+      const updated = storedNotes.map(note =>
+        note.id === noteId
+          ? { ...note, ...updates, updatedAt: new Date().toISOString() }
+          : note
+      )
+      localStorage.setItem('notes', JSON.stringify(updated))
+      setNotes(updated)
+    } catch (err) {
+      console.error('Error updating note:', err)
+      throw err
     }
-
-    await updateDoc(noteRef, updateData)
   }
 
   // Delete a note
   const deleteNote = async (noteId) => {
-    if (!user) throw new Error('User must be logged in')
-
-    const noteRef = doc(db, 'users', user.uid, 'notes', noteId)
-    await deleteDoc(noteRef)
+    try {
+      const storedNotes = JSON.parse(localStorage.getItem('notes') || '[]')
+      const updated = storedNotes.filter(note => note.id !== noteId)
+      localStorage.setItem('notes', JSON.stringify(updated))
+      setNotes(updated)
+    } catch (err) {
+      console.error('Error deleting note:', err)
+      throw err
+    }
   }
 
-  // Reorder notes (batch update order field)
+  // Reorder notes
   const reorderNotes = async (reorderedNotes) => {
-    if (!user) throw new Error('User must be logged in')
-
-    const batch = writeBatch(db)
-
-    reorderedNotes.forEach((note, index) => {
-      const noteRef = doc(db, 'users', user.uid, 'notes', note.id)
-      batch.update(noteRef, { order: index })
-    })
-
-    await batch.commit()
+    try {
+      const updated = reorderedNotes.map((note, index) => ({
+        ...note,
+        order: index,
+      }))
+      localStorage.setItem('notes', JSON.stringify(updated))
+      setNotes(updated)
+    } catch (err) {
+      console.error('Error reordering notes:', err)
+      throw err
+    }
   }
 
   return {

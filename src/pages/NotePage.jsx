@@ -1,28 +1,118 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { doc, getDoc, updateDoc, deleteDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, deleteDoc } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import { useAuth } from '../contexts/AuthContext'
+import { themeConfig } from '../config/theme'
+import TiptapEditorComplete from '../components/TiptapEditorComplete'
 import LoadingSpinner from '../components/LoadingSpinner'
-import { Trash2, Star, Type, Link2, List, ListOrdered, CheckSquare } from 'lucide-react'
+import { useCategories } from '../hooks/useCategories'
+import { Trash2, Star, Tag } from 'lucide-react'
 
 const NotePage = () => {
   const { noteId } = useParams()
   const navigate = useNavigate()
   const { user } = useAuth()
+  const { categories } = useCategories()
   const editorRef = useRef(null)
 
+  // Single source of truth for content
+  const [noteContent, setNoteContent] = useState(null)
   const [title, setTitle] = useState('')
   const [isFavorite, setIsFavorite] = useState(false)
+  const [noteCategories, setNoteCategories] = useState([])
+  const [noteWidth, setNoteWidth] = useState('normal')
   const [updatedAt, setUpdatedAt] = useState(null)
   const [shortId, setShortId] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
-  const [fontSize, setFontSize] = useState(16)
-  const contentRef = useRef(null)
-  const savedSelectionRef = useRef(null)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
   const isMouseDownInsideEditorRef = useRef(false)
+  const isInitialLoadRef = useRef(true)  // Track initial load to prevent auto-save overwriting
+
+  // Calculate optimal note size based on content
+  const calculateNoteSize = (title, content) => {
+    let lines = 0
+    let maxLineLength = 0
+    
+    // Count title
+    if (title && title.trim()) {
+      lines = 1
+      maxLineLength = title.length
+    }
+    
+    // Process ProseMirror JSON content
+    if (content && content.content && Array.isArray(content.content)) {
+      content.content.forEach(node => {
+        if (node.type === 'paragraph' || node.type === 'heading') {
+          lines++
+          let lineText = ''
+          if (node.content) {
+            node.content.forEach(n => {
+              if (n.text) lineText += n.text
+            })
+          }
+          maxLineLength = Math.max(maxLineLength, lineText.length)
+        } else if (node.type === 'bulletList' || node.type === 'orderedList' || node.type === 'taskList') {
+          if (node.content) {
+            node.content.forEach(item => {
+              lines++
+              let lineText = ''
+              if (item.content) {
+                item.content.forEach(n => {
+                  if (n.type === 'paragraph' && n.content) {
+                    n.content.forEach(c => {
+                      if (c.text) lineText += c.text
+                    })
+                  } else if (n.text) {
+                    lineText += n.text
+                  }
+                })
+              }
+              maxLineLength = Math.max(maxLineLength, lineText.length)
+            })
+          }
+        }
+      })
+    }
+
+    // Ensure at least 1 line
+    if (lines === 0 && maxLineLength > 0) lines = 1
+
+    // WIDTH based on longest line: >60=4, >40=3, >20=2, else=1
+    let w = 1
+    if (maxLineLength > 60) w = 4
+    else if (maxLineLength > 40) w = 3
+    else if (maxLineLength > 20) w = 2
+
+    // HEIGHT based on lines: >10=4, >6=3, >3=2, else=1
+    let h = 1
+    if (lines > 10) h = 4
+    else if (lines > 6) h = 3
+    else if (lines > 3) h = 2
+
+    return { w: Math.max(1, w), h: Math.max(1, h) }
+  }
+
+  // Save note to localStorage
+  const saveNote = (id, updates) => {
+    try {
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]')
+      const note = notes.find(n => n.id === id)
+      
+      // Calculate new size based on content
+      const newTitle = updates.title !== undefined ? updates.title : (note?.title || '')
+      const newContent = updates.content !== undefined ? updates.content : (note?.content || null)
+      const { w, h } = calculateNoteSize(newTitle, newContent)
+      
+      const updated = notes.map(n =>
+        n.id === id ? { ...n, ...updates, w, h, updatedAt: new Date().toISOString() } : n
+      )
+      localStorage.setItem('notes', JSON.stringify(updated))
+    } catch (err) {
+      console.error('Error saving note to localStorage:', err)
+    }
+  }
 
   // Format date for display
   const formatDate = (date) => {
@@ -36,78 +126,100 @@ const NotePage = () => {
     }).format(date)
   }
 
-  // Focus editor helper
-  const focusEditor = () => {
-    contentRef.current?.focus()
-  }
-
-  // Fetch note data on mount
+  // Load note from localStorage
   useEffect(() => {
-    const fetchNote = async () => {
-      if (!user || !noteId) return
-
-      try {
-        const noteRef = doc(db, 'users', user.uid, 'notes', noteId)
-        const noteSnap = await getDoc(noteRef)
-
-        if (noteSnap.exists()) {
-          const data = noteSnap.data()
-          console.log('NOTE LOADED:', data)
-          setTitle(data.title || '')
-          setIsFavorite(data.isFavorite || false)
-          setShortId(data.shortId || null)
-          setUpdatedAt(data.updatedAt?.toDate?.() || null)
-          // Set content in ref only - never in state
-          if (contentRef.current) {
-            contentRef.current.innerHTML = data.content || ''
-          }
-        } else {
-          console.error('Note not found:', noteId)
-          setError('Note not found')
-        }
-      } catch (err) {
-        console.error('Error fetching note:', err)
-        setError('Failed to load note')
-      } finally {
-        setLoading(false)
-      }
+    if (!noteId) {
+      setLoading(false)
+      return
     }
 
-    fetchNote()
-  }, [user, noteId])
+    try {
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]')
+      const note = notes.find(n => n.id === noteId)
 
-  // Save note changes and close
-  const handleSaveAndClose = async () => {
-    if (!user || !noteId) return
-
-    // Get content from ref, not state
-    const contentValue = contentRef.current?.innerHTML || ''
-    
-    // Only save if there's content
-    if (title.trim() || contentValue.trim()) {
-      setSaving(true)
-      try {
-        const noteRef = doc(db, 'users', user.uid, 'notes', noteId)
-        await updateDoc(noteRef, {
-          title: title.trim(),
-          content: contentValue.trim(),
-          isFavorite,
-          updatedAt: serverTimestamp(),
-        })
-      } catch (err) {
-        console.error('Error saving note:', err)
-        setError('Failed to save note')
-        setSaving(false)
+      if (!note) {
+        console.warn('Note not found:', noteId)
+        setLoading(false)
         return
       }
-      setSaving(false)
+
+      // Load note data (content is always JSON object, never string)
+      setTitle(note.title || '')
+      setNoteContent(note.content || null)
+      setIsFavorite(note.isFavorite || false)
+      setNoteCategories(note.categories || [])
+      setNoteWidth(note.width || 'normal')
+      setShortId(note.shortId || null)
+      setUpdatedAt(note.updatedAt ? new Date(note.updatedAt) : null)
+    } catch (err) {
+      console.error('Error loading note from localStorage:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [noteId])
+
+  // Auto-save when content or title changes (but NOT on initial load)
+  useEffect(() => {
+    if (!noteId) return
+    
+    // Skip auto-save on initial load to prevent overwriting loaded content
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false
+      return
+    }
+
+    saveNote(noteId, { title, content: noteContent })
+  }, [noteContent, title, noteId])
+
+  // Save note and close
+  const handleSaveAndClose = () => {
+    // Check if note is empty (no title and no content)
+    const isEmpty = !title && (!noteContent || (noteContent.content && noteContent.content.length === 0))
+    
+    if (isEmpty) {
+      // Delete empty note
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]')
+      const filtered = notes.filter(n => n.id !== noteId)
+      localStorage.setItem('notes', JSON.stringify(filtered))
+    } else {
+      // Save non-empty note
+      saveNote(noteId, { title, content: noteContent })
     }
     navigate('/')
   }
 
   // Toggle favorite
   const toggleFavorite = () => {
-    setIsFavorite((prev) => !prev)
+    const newFavorite = !isFavorite
+    setIsFavorite(newFavorite)
+    // Save to localStorage immediately
+    saveNote(noteId, { isFavorite: newFavorite })
+  }
+
+  // Toggle category
+  const toggleCategory = (categoryId) => {
+    const newCategories = noteCategories.includes(categoryId)
+      ? noteCategories.filter(id => id !== categoryId)
+      : [...noteCategories, categoryId]
+    setNoteCategories(newCategories)
+    // Save to localStorage immediately
+    saveNote(noteId, { categories: newCategories })
+  }
+
+  // Toggle note width (normal ↔ wide)
+  const toggleNoteWidth = () => {
+    setNoteWidth(noteWidth === 'normal' ? 'wide' : 'normal')
+  }
+
+  // Get width class based on noteWidth state
+  const getWidthClass = () => {
+    switch (noteWidth) {
+      case 'wide':
+        return 'w-[80vw]'
+      case 'normal':
+      default:
+        return 'max-w-[900px]'
+    }
   }
 
   // Delete note
@@ -150,197 +262,6 @@ const NotePage = () => {
     return () => document.removeEventListener('mouseup', handleGlobalMouseUp)
   }, [])
 
-  // Handle keyboard shortcuts for rich text formatting
-  const handleContentKeyDown = (e) => {
-    // Handle "- " for bullet lists
-    if (e.key === ' ') {
-      const sel = window.getSelection()
-      if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0)
-        if (range.startContainer.nodeType === 3) {
-          const text = range.startContainer.textContent
-          const offset = range.startOffset
-          
-          // Check for "- " pattern
-          if (offset >= 2 && text.substring(offset - 2, offset) === '- ') {
-            e.preventDefault()
-            
-            // Delete the "- " characters
-            range.setStart(range.startContainer, offset - 2)
-            range.setEnd(range.startContainer, offset)
-            range.deleteContents()
-            
-            // Apply bullet list
-            contentRef.current?.focus()
-            document.execCommand('insertUnorderedList')
-            return
-          }
-          
-          // Check for "1. " pattern
-          if (offset >= 3 && text.substring(offset - 3, offset) === '1. ') {
-            e.preventDefault()
-            
-            // Delete the "1. " characters
-            range.setStart(range.startContainer, offset - 3)
-            range.setEnd(range.startContainer, offset)
-            range.deleteContents()
-            
-            // Apply numbered list
-            contentRef.current?.focus()
-            document.execCommand('insertOrderedList')
-            return
-          }
-        }
-      }
-    }
-    
-    if (e.ctrlKey || e.metaKey) {
-      switch (e.key.toLowerCase()) {
-        case 'b':
-          e.preventDefault()
-          document.execCommand('bold', false, null)
-          break
-        case 'i':
-          e.preventDefault()
-          document.execCommand('italic', false, null)
-          break
-        case 'u':
-          e.preventDefault()
-          document.execCommand('underline', false, null)
-          break
-        case 'z':
-          if (!e.shiftKey) {
-            e.preventDefault()
-            document.execCommand('undo', false, null)
-          }
-          break
-        case 'y':
-          e.preventDefault()
-          document.execCommand('redo', false, null)
-          break
-        default:
-          break
-      }
-    }
-  }
-
-  // Save current text selection
-  const saveSelection = () => {
-    const sel = window.getSelection()
-    if (sel.rangeCount > 0) {
-      savedSelectionRef.current = sel.getRangeAt(0)
-    }
-  }
-
-  // Restore saved text selection
-  const restoreSelection = () => {
-    if (savedSelectionRef.current) {
-      const sel = window.getSelection()
-      sel.removeAllRanges()
-      sel.addRange(savedSelectionRef.current)
-    }
-  }
-
-  // Apply precise font size to selected text
-  const applyFontSize = (size) => {
-    focusEditor()
-    const selection = window.getSelection()
-    if (selection.toString().length > 0) {
-      const span = document.createElement('span')
-      span.style.fontSize = `${size}px`
-      
-      const range = selection.getRangeAt(0)
-      range.surroundContents(span)
-      console.log('COMMAND FIRED: applyFontSize')
-    }
-  }
-
-  // Apply list formatting (works with or without selection)
-  const applyList = (type) => {
-    contentRef.current?.focus()
-    console.log('COMMAND FIRED:', type)
-    if (type === 'bullet') {
-      document.execCommand('insertUnorderedList')
-    } else if (type === 'numbered') {
-      document.execCommand('insertOrderedList')
-    } else if (type === 'checkbox') {
-      // Create checkbox list by inserting unordered list then converting to checkboxes
-      document.execCommand('insertUnorderedList')
-      
-      // Get the newly created list item and add checkbox styling
-      const sel = window.getSelection()
-      if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0)
-        let node = range.startContainer
-        
-        // Find the li element
-        while (node && node.nodeName !== 'LI') {
-          node = node.parentNode
-        }
-        
-        if (node && node.nodeName === 'LI') {
-          // Add checkbox class to the list item
-          node.classList.add('checkbox-list-item')
-        }
-      }
-    }
-  }
-
-  // Create button from selected text
-  const createButton = () => {
-    focusEditor()
-    const sel = window.getSelection()
-    if (!sel || sel.isCollapsed) {
-      alert('Please select text first')
-      return
-    }
-    
-    const text = sel.toString()
-    const url = prompt('Enter URL or #noteId')
-    
-    if (!url) return
-    
-    let finalUrl = url
-    
-    if (url.startsWith('#')) {
-      const id = url.replace('#', '')
-      finalUrl = `/note/${id}`
-    }
-    
-    console.log('COMMAND FIRED: insertHTML')
-    console.log('Selected text:', text)
-    console.log('Final URL:', finalUrl)
-    console.log('Before insert, editor HTML:', contentRef.current?.innerHTML)
-    
-    // Create button element
-    const buttonEl = document.createElement('a')
-    buttonEl.href = finalUrl
-    buttonEl.className = 'note-button'
-    buttonEl.textContent = text
-    
-    // Get range and insert button
-    const range = sel.getRangeAt(0)
-    range.deleteContents()
-    range.insertNode(buttonEl)
-    
-    // Move cursor after button
-    range.setStartAfter(buttonEl)
-    range.collapse(true)
-    sel.removeAllRanges()
-    sel.addRange(range)
-    
-    // Verify button was inserted
-    console.log('Immediately after insert, editor HTML:', contentRef.current?.innerHTML)
-    setTimeout(() => {
-      console.log('After 100ms, editor HTML:', contentRef.current?.innerHTML)
-      if (!contentRef.current?.innerHTML.includes('note-button')) {
-        console.warn('WARNING: Button may not have been inserted!')
-      } else {
-        console.log('SUCCESS: Button found in editor')
-      }
-    }, 100)
-  }
-
 
   if (loading) {
     return (
@@ -350,24 +271,28 @@ const NotePage = () => {
     )
   }
 
-  if (error) {
+  // Safe check: ensure we have valid noteId before rendering editor
+  if (!noteId) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <p className="text-red-500 dark:text-red-400 mb-4">{error}</p>
-          <button
-            onClick={() => navigate('/')}
-            className="text-amber-500 hover:text-amber-600"
-          >
-            Go back to notes
-          </button>
+          <p className="text-gray-500 dark:text-gray-400">No note selected</p>
         </div>
       </div>
     )
   }
 
-  // Safe check: ensure we have valid data before rendering editor
-  if (!noteId || title === undefined) {
+  // Check if note exists in localStorage
+  const noteExists = (() => {
+    try {
+      const notes = JSON.parse(localStorage.getItem('notes') || '[]')
+      return notes.some(n => n.id === noteId)
+    } catch {
+      return false
+    }
+  })()
+
+  if (!noteExists) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -382,91 +307,35 @@ const NotePage = () => {
       className="fixed inset-0 bg-black/50 flex items-start justify-center pt-4 sm:pt-12 px-4 z-50 overflow-y-auto"
       onClick={handleBackdropClick}
     >
-      {/* Note editor card */}
+      {/* Note editor card - responsive width with dynamic width setting */}
       <div 
         ref={editorRef}
-        className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl mb-4 sm:mb-12 max-h-[90vh] sm:max-h-none flex flex-col"
+        className={`rounded-2xl shadow-xl ${noteWidth === 'wide' ? 'w-[80vw]' : 'w-[95%] sm:w-[90%] lg:w-[80%] max-w-[900px]'} mb-4 sm:mb-12 max-h-[90vh] sm:max-h-none flex flex-col transition-all duration-300`}
+        style={{
+          backgroundColor: themeConfig.background.note,
+          borderColor: themeConfig.border.default,
+        }}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={handleEditorMouseDown}
       >
-        {/* Header with note ID */}
-        <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-          <div className="text-xs opacity-60 font-mono">
+        {/* Header with note ID and action buttons */}
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b flex items-center justify-between" style={{ borderColor: themeConfig.border.default }}>
+          <div className="text-xs opacity-60 font-mono" style={{ color: themeConfig.text.secondary }}>
             #{shortId || '?'}
           </div>
-        </div>
-
-        {/* Toolbar with actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-3 sm:p-4 border-b border-gray-100 dark:border-gray-700 overflow-x-auto">
-          {/* Text formatting controls */}
-          <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
-            {/* Font size control */}
-            <div className="flex items-center gap-1 sm:gap-2">
-              <Type className="w-4 h-4 text-gray-500 dark:text-gray-400 flex-shrink-0" />
-              <input
-                type="number"
-                min="10"
-                max="72"
-                step="1"
-                value={fontSize}
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  saveSelection()
-                }}
-                onChange={(e) => {
-                  const size = parseInt(e.target.value)
-                  setFontSize(size)
-                  applyFontSize(size)
-                }}
-                className="w-14 sm:w-16 px-2 py-1 text-xs sm:text-sm rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600"
-                title="Font size in pixels"
-              />
-              <span className="text-xs text-gray-500 flex-shrink-0">px</span>
-            </div>
-
-            {/* Make button */}
+          
+          {/* Top right action buttons */}
+          <div className="flex items-center gap-2">
+            {/* Width toggle button - desktop only */}
             <button
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={createButton}
-              className="p-2 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors flex-shrink-0"
-              title="Create clickable button from selected text"
+              onClick={toggleNoteWidth}
+              className="hidden md:flex p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors items-center justify-center"
+              aria-label="Toggle note width"
+              title={`Width: ${noteWidth} (click to change)`}
             >
-              <Link2 className="w-4 h-4 text-blue-500" />
+              <span className="text-lg">⬌</span>
             </button>
 
-            {/* Bullet list button */}
-            <button
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyList('bullet')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-              title="Create bullet list"
-            >
-              <List className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-
-            {/* Numbered list button */}
-            <button
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyList('numbered')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-              title="Create numbered list"
-            >
-              <ListOrdered className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-
-            {/* Checkbox list button */}
-            <button
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={() => applyList('checkbox')}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex-shrink-0"
-              title="Create checkbox list"
-            >
-              <CheckSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            </button>
-          </div>
-
-          {/* Right side actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
             {/* Favorite toggle */}
             <button
               onClick={toggleFavorite}
@@ -476,6 +345,7 @@ const NotePage = () => {
                   : 'hover:bg-gray-100 dark:hover:bg-gray-700'
               }`}
               aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             >
               <Star 
                 className={`w-5 h-5 ${
@@ -486,11 +356,63 @@ const NotePage = () => {
               />
             </button>
 
+            {/* Categories dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                aria-label="Manage categories"
+                title="Manage categories"
+              >
+                <Tag className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              </button>
+
+              {/* Category dropdown menu */}
+              {showCategoryDropdown && (
+                <div 
+                  className="absolute top-full right-0 mt-2 min-w-[200px] rounded-lg shadow-lg border overflow-hidden z-50"
+                  style={{ 
+                    backgroundColor: themeConfig.background.note,
+                    borderColor: themeConfig.border.default
+                  }}
+                >
+                  {categories.length === 0 ? (
+                    <div className="p-3 text-sm" style={{ color: themeConfig.text.secondary }}>
+                      No categories yet
+                    </div>
+                  ) : (
+                    categories.map((category) => (
+                      <button
+                        key={category.id}
+                        onClick={() => toggleCategory(category.id)}
+                        className="w-full px-3 py-2 text-left hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
+                        style={{ color: themeConfig.text.primary }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={noteCategories.includes(category.id)}
+                          onChange={() => {}}
+                          className="w-4 h-4"
+                          style={{ accentColor: category.color }}
+                        />
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: category.color }}
+                        />
+                        <span className="text-sm">{category.name}</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Delete button */}
             <button
               onClick={handleDelete}
               className="p-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
               aria-label="Delete note"
+              title="Delete note"
             >
               <Trash2 className="w-5 h-5 text-red-500" />
             </button>
@@ -498,55 +420,46 @@ const NotePage = () => {
         </div>
 
         {/* Editor content */}
-        <div className="p-3 sm:p-6 flex-1 overflow-y-auto flex flex-col">
+        <div className="px-4 sm:px-8 py-4 sm:py-6 flex-1 overflow-y-auto flex flex-col">
           {/* Title input */}
           <input
             type="text"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-transparent outline-none text-gray-800 dark:text-white placeholder-gray-400 text-xl sm:text-2xl font-semibold mb-3 sm:mb-4"
+            className="w-full bg-transparent outline-none placeholder-gray-400 text-xl sm:text-2xl font-semibold mb-4 sm:mb-6"
+            style={{ color: themeConfig.text.primary }}
           />
 
-          {/* Content editor with rich text support */}
-          <div
-            ref={contentRef}
-            contentEditable
-            suppressContentEditableWarning
-            onKeyDown={handleContentKeyDown}
-            onMouseUp={saveSelection}
-            onClick={(e) => {
-              // Handle checkbox clicks
-              if (e.target.tagName === 'LI' && e.target.classList.contains('checkbox-list-item')) {
-                e.target.classList.toggle('checked')
-              }
-            }}
-            className="w-full bg-transparent outline-none text-gray-700 dark:text-gray-200 min-h-[150px] sm:min-h-[300px] focus:outline-none flex-1 overflow-y-auto text-sm sm:text-base"
-            style={{ color: 'var(--text-color)' }}
-          />
-          
-          {/* Formatting hints */}
-          <div className="mt-3 sm:mt-4 text-xs text-gray-400 space-y-1 flex-shrink-0">
-            <p>💡 Keyboard shortcuts:</p>
-            <p className="hidden sm:block">Ctrl+B = Bold | Ctrl+I = Italic | Ctrl+U = Underline | Ctrl+Z = Undo | Ctrl+Y = Redo</p>
-            <p className="sm:hidden">Ctrl+B/I/U = Format | Ctrl+Z/Y = Undo/Redo</p>
+          {/* Tiptap Editor with padding */}
+          <div className="flex-1 flex flex-col">
+            <TiptapEditorComplete
+              key={noteId}
+              content={noteContent}
+              onChange={setNoteContent}
+              autoFocus={true}
+              theme={{
+                textColor: themeConfig.text.primary,
+                bgColor: themeConfig.background.note,
+                borderColor: themeConfig.border.default,
+              }}
+            />
           </div>
         </div>
 
         {/* Footer with date and close button */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-100 dark:border-gray-700 flex-shrink-0">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-t flex-shrink-0" style={{ borderColor: themeConfig.border.default }}>
           {/* Updated date - bottom left */}
-          <span className="text-xs text-gray-400 order-2 sm:order-1">
+          <span className="text-xs order-2 sm:order-1" style={{ color: themeConfig.text.secondary }}>
             {updatedAt ? `Edited ${formatDate(updatedAt)}` : ''}
           </span>
 
           {/* Close button (saves and closes) */}
           <button
             onClick={handleSaveAndClose}
-            disabled={saving}
-            className="w-full sm:w-auto px-6 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 dark:disabled:bg-gray-600 text-white font-medium rounded-lg transition-colors disabled:cursor-not-allowed order-1 sm:order-2"
+            className="w-full sm:w-auto px-6 py-2 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-lg transition-colors order-1 sm:order-2"
           >
-            {saving ? 'Saving...' : 'Sluiten'}
+            Sluiten
           </button>
         </div>
       </div>
