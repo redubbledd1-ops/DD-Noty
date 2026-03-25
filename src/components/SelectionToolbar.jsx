@@ -28,27 +28,27 @@ const SelectionToolbar = ({ selectedCount, onAddToCategory, onDeleteSelected, ca
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 bg-gray-900 dark:bg-gray-950 border-t border-gray-700 p-4 flex items-center justify-between z-40"
+      className="fixed bottom-0 left-0 right-0 border-t p-2 sm:p-4 flex items-center justify-between z-40 safe-area-inset-bottom"
       style={{ borderColor: themeConfig.border.default, backgroundColor: themeConfig.background.note }}
     >
-      <div className="flex items-center gap-4">
-        <span className="text-sm font-medium" style={{ color: themeConfig.text.primary }}>
-          {selectedCount} selected
+      <div className="flex items-center gap-2 sm:gap-4">
+        <span className="text-xs sm:text-sm font-medium" style={{ color: themeConfig.text.primary }}>
+          {selectedCount}
         </span>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         {/* Add to category dropdown */}
         <div className="relative">
           <button
             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-            className="p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors flex items-center gap-2"
+            className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors flex items-center gap-1 sm:gap-2"
             style={{ color: themeConfig.text.primary }}
             title="Add to category"
           >
-            <Tag className="w-5 h-5" />
-            <span className="text-sm hidden sm:inline">Category</span>
-            <ChevronUp className={`w-4 h-4 transition-transform ${showCategoryDropdown ? '' : 'rotate-180'}`} />
+            <Tag className="w-4 sm:w-5 h-4 sm:h-5" />
+            <span className="text-xs sm:text-sm hidden sm:inline">Category</span>
+            <ChevronUp className={`w-3 sm:w-4 h-3 sm:h-4 transition-transform ${showCategoryDropdown ? '' : 'rotate-180'}`} />
           </button>
 
           {/* Category dropdown */}
@@ -93,22 +93,22 @@ const SelectionToolbar = ({ selectedCount, onAddToCategory, onDeleteSelected, ca
         {/* Delete button */}
         <button
           onClick={onDeleteSelected}
-          className="p-2 rounded-lg hover:bg-red-900/30 transition-colors flex items-center gap-2"
+          className="p-1.5 sm:p-2 rounded-lg hover:bg-red-900/30 transition-colors flex items-center gap-1 sm:gap-2"
           style={{ color: '#ef4444' }}
           title="Delete selected"
         >
-          <Trash2 className="w-5 h-5" />
-          <span className="text-sm hidden sm:inline">Delete</span>
+          <Trash2 className="w-4 sm:w-5 h-4 sm:h-5" />
+          <span className="text-xs sm:text-sm hidden sm:inline">Delete</span>
         </button>
 
         {/* Close button */}
         <button
           onClick={onClose}
-          className="p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
+          className="p-1.5 sm:p-2 rounded-lg hover:bg-gray-700 dark:hover:bg-gray-800 transition-colors"
           style={{ color: themeConfig.text.primary }}
           title="Close selection"
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 sm:w-5 h-4 sm:h-5" />
         </button>
       </div>
     </div>

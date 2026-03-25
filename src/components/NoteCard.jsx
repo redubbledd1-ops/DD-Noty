@@ -295,9 +295,9 @@ const NoteCard = ({ note, onDelete, onResizeEnd, isDragging, onResizingChange, i
     <div
       ref={cardRef}
       className={`
-        rounded-2xl 
+        rounded-xl sm:rounded-2xl
         shadow-sm hover:shadow-md 
-        p-2 sm:p-3
+        p-1.5 sm:p-3
         flex flex-col 
         group 
         cursor-pointer 
@@ -333,7 +333,7 @@ const NoteCard = ({ note, onDelete, onResizeEnd, isDragging, onResizingChange, i
 
       {/* Note title - only show if explicitly set */}
       {note.title && (
-        <h3 className={`font-semibold ${getTitleSize(note.h || 2)} mb-1 text-xs sm:text-sm line-clamp-2 ${isSelectionMode ? 'pl-6' : ''}`} style={{ color: themeConfig.text.primary }}>
+        <h3 className={`font-semibold ${getTitleSize(note.h || 2)} mb-0.5 text-xs line-clamp-2 ${isSelectionMode ? 'pl-6' : ''}`} style={{ color: themeConfig.text.primary }}>
           {note.title}
         </h3>
       )}

@@ -27,13 +27,13 @@ const Navbar = () => {
         transform: isHeaderVisible ? 'translateY(0)' : 'translateY(-100%)',
       }}
     >
-      <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-14 sm:h-16">
+      <div className="w-full max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-12 sm:h-14 md:h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-            <StickyNote className="w-6 sm:w-8 h-6 sm:h-8 text-amber-500" />
+          <Link to="/" className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+            <StickyNote className="w-5 sm:w-6 md:w-8 h-5 sm:h-6 md:h-8 text-amber-500" />
             <span 
-              className="text-lg sm:text-xl font-bold"
+              className="text-base sm:text-lg md:text-xl font-bold"
               style={{ color: themeConfig.text.primary }}
             >
               Noty
@@ -41,20 +41,20 @@ const Navbar = () => {
           </Link>
 
           {/* Navigation */}
-          <div className="flex items-center gap-1 sm:gap-2">
+          <div className="flex items-center gap-0.5 sm:gap-1 md:gap-2">
             {user && (
               <>
                 {/* Categories link */}
                 <Link
                   to="/categories"
-                  className="p-2 rounded-full transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 rounded-full transition-colors flex-shrink-0"
                   style={{
                     backgroundColor: location.pathname === '/categories' ? colors.borderColor : 'transparent',
                   }}
                   aria-label="Categories"
                 >
                   <Tag 
-                    className="w-5 h-5"
+                    className="w-4 sm:w-5 h-4 sm:h-5"
                     style={{ color: themeConfig.text.secondary }}
                   />
                 </Link>
@@ -62,7 +62,7 @@ const Navbar = () => {
                 {/* Settings link */}
                 <Link
                   to="/settings"
-                  className="p-2 rounded-full transition-colors flex-shrink-0"
+                  className="p-1.5 sm:p-2 rounded-full transition-colors flex-shrink-0"
                   style={{
                     backgroundColor: location.pathname === '/settings' ? colors.borderColor : 'transparent',
                   }}
@@ -77,18 +77,18 @@ const Navbar = () => {
                 {/* Logout button */}
                 <button
                   onClick={handleLogout}
-                  className="p-2 rounded-full transition-colors hover:opacity-80 flex-shrink-0"
+                  className="p-1.5 sm:p-2 rounded-full transition-colors hover:opacity-80 flex-shrink-0"
                   aria-label="Logout"
                 >
                   <LogOut 
-                    className="w-5 h-5"
+                    className="w-4 sm:w-5 h-4 sm:h-5"
                     style={{ color: themeConfig.text.secondary }}
                   />
                 </button>
 
                 {/* User email */}
                 <span 
-                  className="hidden sm:block text-xs sm:text-sm ml-2 truncate"
+                  className="hidden md:block text-xs ml-1 lg:ml-2 truncate max-w-[120px]"
                   style={{ color: themeConfig.text.secondary }}
                 >
                   {user.email}

@@ -420,14 +420,14 @@ const NotePage = () => {
         </div>
 
         {/* Editor content */}
-        <div className="px-4 sm:px-8 py-4 sm:py-6 flex-1 overflow-y-auto flex flex-col">
+        <div className="px-3 sm:px-8 py-2 sm:py-6 flex-1 overflow-y-auto flex flex-col">
           {/* Title input */}
           <input
             type="text"
             placeholder="Title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full bg-transparent outline-none placeholder-gray-400 text-xl sm:text-2xl font-semibold mb-4 sm:mb-6"
+            className="w-full bg-transparent outline-none placeholder-gray-400 text-lg sm:text-2xl font-semibold mb-2 sm:mb-6"
             style={{ color: themeConfig.text.primary }}
           />
 
