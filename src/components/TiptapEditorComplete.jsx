@@ -132,6 +132,7 @@ const TiptapEditorComplete = ({ content, onChange, onSave, theme, autoFocus }) =
       
       <div 
         className="tiptap-editor-content-wrapper"
+        style={{ overflow: 'hidden' }}
       >
         <EditorContent
           editor={editor}
@@ -140,10 +141,11 @@ const TiptapEditorComplete = ({ content, onChange, onSave, theme, autoFocus }) =
             color: theme?.textColor || '#000',
             fontSize: '16px',
             lineHeight: '1.6',
-            minHeight: '300px',
+            minHeight: '150px',
             padding: '0px',
             outline: 'none',
             boxShadow: 'none',
+            overflow: 'hidden',
           }}
         />
       </div>

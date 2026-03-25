@@ -304,16 +304,18 @@ const NotePage = () => {
 
   return (
     <div 
-      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-4 sm:pt-12 px-4 z-50 overflow-y-auto"
+      className="fixed inset-0 bg-black/50 flex items-start justify-center pt-2 sm:pt-8 px-2 sm:px-4 z-50 overflow-hidden"
       onClick={handleBackdropClick}
     >
       {/* Note editor card - responsive width with dynamic width setting */}
       <div 
         ref={editorRef}
-        className={`rounded-2xl shadow-xl ${noteWidth === 'wide' ? 'w-[80vw]' : 'w-[95%] sm:w-[90%] lg:w-[80%] max-w-[900px]'} mb-4 sm:mb-12 max-h-[90vh] sm:max-h-none flex flex-col transition-all duration-300`}
+        className={`rounded-2xl shadow-xl ${noteWidth === 'wide' ? 'w-[80vw]' : 'w-full sm:w-[90%] lg:w-[80%] max-w-[900px]'} mb-2 sm:mb-8 flex flex-col transition-all duration-300`}
         style={{
           backgroundColor: themeConfig.background.note,
           borderColor: themeConfig.border.default,
+          maxHeight: 'calc(100vh - 16px)',
+          maxHeight: 'calc(100dvh - 16px)',
         }}
         onClick={(e) => e.stopPropagation()}
         onMouseDown={handleEditorMouseDown}
@@ -420,7 +422,7 @@ const NotePage = () => {
         </div>
 
         {/* Editor content */}
-        <div className="px-3 sm:px-8 py-2 sm:py-6 flex-1 overflow-y-auto flex flex-col">
+        <div className="px-3 sm:px-8 py-2 sm:py-4 flex-1 overflow-hidden flex flex-col">
           {/* Title input */}
           <input
             type="text"
